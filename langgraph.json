@@ -1,0 +1,18 @@
+{
+  "version": "1.0",
+  "graphs": {
+    "audit_app": "backend/app/agentic/graph/audit_graph.py:audit_app"
+  },
+  "env": {
+    "PYTHONPATH": "backend"
+  },
+  "dependencies": [
+    "langgraph",
+    "langchain",
+    "langchain-core",
+    "langchain-groq",
+    "pydantic",
+    "gitpython",
+    "requests"
+  ]
+}

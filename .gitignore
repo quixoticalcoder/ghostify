@@ -1,0 +1,11 @@
+venv/
+.venv/
+*.pyc
+.env
+__pycache__/
+.langgraph_api/
+logs/
+reports/
+audit_report_*.json
+security_summary_*.txt
+temp_gemini_prompt.txt
