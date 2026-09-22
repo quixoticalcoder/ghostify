@@ -14,6 +14,9 @@ _LOCK = threading.Lock()
 
 
 def validate_repository(url: str) -> str:
+    markdown = re.fullmatch(r'\[[^\]]*\]\((https://github\.com/[^\s)]+)\)', url.strip())
+    if markdown:
+        url = markdown.group(1)
     match = re.fullmatch(r'https://github\.com/([A-Za-z0-9-]+)/([A-Za-z0-9_.-]+)/?', url.strip())
     if not match:
         raise ValueError('Enter a public GitHub repository URL, without query parameters or credentials.')
@@ -53,6 +56,9 @@ def run_audit(url: str) -> dict:
                     raise RuntimeError('The audit exceeded ten minutes. Try a smaller repository.') from None
             if process.returncode or not result_path.exists():
                 raise RuntimeError('Audit failed. Check the repository, Gemini key and model access. Scanner or provider availability may also be the cause.')
-            return json.loads(result_path.read_text())
+            result = json.loads(result_path.read_text())
+            if result.get('error'):
+                raise RuntimeError(result['error'])
+            return result
     finally:
         _LOCK.release()
