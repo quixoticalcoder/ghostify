@@ -28,6 +28,8 @@ def main():
             message = 'Gemini quota is exhausted or unavailable for this project. Check Google AI Studio rate limits.'
         elif '403' in detail or 'permission_denied' in detail:
             message = 'Google denied access. Check the API key restrictions and project access in AI Studio.'
+        elif 'certificate' in detail or 'ssl' in detail:
+            message = 'HTTPS certificate validation failed while contacting GitHub or Google.'
         elif 'git clone failed' in detail:
             message = 'GitHub cloning failed. Check that the repository is public and accessible.'
         else:
