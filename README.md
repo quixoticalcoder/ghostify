@@ -4,6 +4,44 @@ Ghostify is an experimental, LangGraph-based system for authorized application-s
 
 > **Authorized use only.** Run Ghostify only against systems you own or have explicit permission to test. Dynamic checks can make HTTP requests and may affect target systems. Do not use it against public services, third-party repositories, or production environments without written authorization and an agreed testing scope.
 
+## Browser app and deployment
+
+[Deploy Ghostify on Render](https://render.com/deploy?repo=https://github.com/quixoticalcoder/ghostify)
+
+The repository now includes a Streamlit interface and a Docker-based Render Blueprint. The link starts deployment setup; it is **not** an already-running application URL. After the build succeeds, Render assigns the public app URL.
+
+1. Create or sign in to a Render account and open the deployment link.
+2. Provide `GOOGLE_API_KEY` and choose a strong `GHOSTIFY_ACCESS_PASSWORD` in Render's environment fields. Do not commit these values.
+3. Deploy the Blueprint, wait for its health check to pass, and open the service URL.
+4. Enter the access password, supply an authorized public repository URL, and download the report when analysis finishes.
+
+The Blueprint selects Render's free plan. Free services sleep when idle and have limited resources; larger repositories may require more memory. Consult [Render's free-service limits](https://render.com/docs/free) before changing plans. Gemini usage is separate and depends on your Google account and quotas.
+
+Hosted analysis accepts repositories owned by `quixoticalcoder` by default. Set the comma-separated `GHOSTIFY_ALLOWED_OWNERS` variable to change that scope. The web interface always uses the source-only summary workflow with `api_base_url=None`; the CLI remains available for separately authorized dynamic tests. Findings and source excerpts can be sent to Google Gemini. Tracing is disabled in hosted workers.
+
+`GEMINI_MODEL` is configurable in Render; the Blueprint uses `gemini-3.5-flash-lite` from [Google's model catalog](https://ai.google.dev/gemini-api/docs/models). Availability must be verified with your API key. This deployment has not been tested with a live provider credential.
+
+One audit runs at a time per application process, with a ten-minute deadline. Temporary clones and worker output are removed after completion or failure. Results remain in the browser session until sign-out or session loss; download them before closing the app. There is no persistent report database. Scanner failures can reduce coverage without failing the entire legacy pipeline; a report is not assurance that every scanner completed.
+
+For local browser use on Linux or macOS:
+
+```bash
+pip install -r requirements-web.txt
+export GOOGLE_API_KEY="your-key"
+export GEMINI_MODEL="gemini-3.5-flash-lite"
+export GHOSTIFY_ACCESS_PASSWORD="choose-a-strong-password"
+python -m streamlit run streamlit_app.py
+```
+
+For a container deployment, build the included `Dockerfile` and provide the same variables through your host's secrets manager. The image runs as a non-root user, respects `PORT`, and exposes Streamlit's `/_stcore/health` endpoint.
+
+Run web tests without making live provider calls:
+
+```bash
+pip install pytest
+PYTHONPATH=.:backend python -m pytest tests/test_web.py -q
+```
+
 ## Overview
 
 Traditional static-analysis tools are valuable for known vulnerability patterns, but they do not independently establish whether a system's authorization, business logic, or multi-step workflows are secure. Ghostify explores this gap by coordinating complementary analysis stages:
