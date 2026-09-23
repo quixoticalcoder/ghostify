@@ -9,4 +9,4 @@ RUN useradd --create-home app && chown -R app:app /app
 USER app
 ENV PORT=8501 LANGCHAIN_TRACING_V2=false LANGSMITH_TRACING=false
 EXPOSE 8501
-CMD ["sh", "-c", "exec streamlit run streamlit_app.py --server.address=0.0.0.0 --server.port=${PORT} --server.headless=true --browser.gatherUsageStats=false"]
+CMD ["sh", "-c", "python web/check_github.py; exec streamlit run streamlit_app.py --server.address=0.0.0.0 --server.port=${PORT} --server.headless=true --browser.gatherUsageStats=false"]
