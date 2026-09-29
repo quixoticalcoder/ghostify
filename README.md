@@ -4,6 +4,11 @@ Ghostify is an experimental, LangGraph-based system for authorized application-s
 
 > **Authorized use only.** Run Ghostify only against systems you own or have explicit permission to test. Dynamic checks can make HTTP requests and may affect target systems. Do not use it against public services, third-party repositories, or production environments without written authorization and an agreed testing scope.
 
+## Demo Video Link
+
+https://youtu.be/OIf6Q4wgw9k?si=zY-hcmIdu8hEaFs3
+
+
 ## Browser app and deployment
 
 [Deploy Ghostify on Render](https://render.com/deploy?repo=https://github.com/quixoticalcoder/ghostify)
