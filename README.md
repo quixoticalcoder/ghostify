@@ -261,3 +261,9 @@ Contributions are welcome. Before opening a pull request, keep changes scoped, a
 ## License
 
 No license file is currently included in this repository. Do not assume permission to reuse, redistribute, or deploy the code beyond the rights granted by its copyright holder.
+
+## Reviewer access
+
+The [live app](https://ghostify-by1w.onrender.com/) offers **Try the live reviewer demo** below the password form. Reviewers use the same source-analysis engine, AI summaries, findings, and JSON/text downloads as the password workspace. Reports remain isolated in Streamlit browser-session state and are cleared on sign-out. Reloading or disconnecting can reset the session.
+
+Reviewers must confirm repository permission and can analyze only public repositories from configured owners. The free demo allows three audit attempts per reviewer session and ten shared attempts per 24-hour process window. Failed attempts count; server restarts reset these in-memory counters. These are demo usage limits, not account-based abuse prevention. Password access retains its existing workflow and is not subject to reviewer quotas. Dynamic API testing remains a local-workflow capability.

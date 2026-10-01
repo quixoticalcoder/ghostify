@@ -81,3 +81,45 @@ def test_ui_fails_closed_without_password(monkeypatch):
     assert not app.exception
     assert 'setup is incomplete' in app.info[0].value
     assert len(app.text_input) == 0
+
+
+def test_reviewer_workflow_isolated_and_limited(monkeypatch):
+    from web import reviewer
+    monkeypatch.setenv('GHOSTIFY_ACCESS_PASSWORD', 'test-password')
+    monkeypatch.setenv('GOOGLE_API_KEY', 'test-key')
+    monkeypatch.setattr(reviewer, '_used', 0)
+    monkeypatch.setattr(reviewer, '_started', reviewer.time.monotonic())
+    fake = Mock(return_value={'repository': 'test', 'report': {'summary': {}}, 'summary': 'Reviewer report'})
+    monkeypatch.setattr(runner, 'run_audit', fake)
+    path = Path(__file__).resolve().parents[1] / 'streamlit_app.py'
+    app = AppTest.from_file(path).run()
+    next(b for b in app.button if b.label == 'Try the live reviewer demo').click().run()
+    assert app.session_state.access_role == 'reviewer'
+    app.text_input[0].set_value('https://github.com/quixoticalcoder/ghostify')
+    next(b for b in app.button if b.label == 'Analyze repository').click().run()
+    fake.assert_not_called()
+    app.checkbox[0].check()
+    for _ in range(3):
+        next(b for b in app.button if b.label == 'Analyze repository').click().run()
+    assert fake.call_count == 3
+    next(b for b in app.button if b.label == 'Analyze repository').click().run()
+    assert '3 audit attempts' in app.error[0].value
+    assert fake.call_count == 3
+    other = AppTest.from_file(path).run()
+    next(b for b in other.button if b.label == 'Try the live reviewer demo').click().run()
+    assert len(other.metric) == 0
+    next(b for b in app.button if b.label == 'Sign out').click().run()
+    assert len(app.metric) == 0
+    assert app.text_input[0].label == 'Access password'
+
+
+def test_shared_reviewer_allowance(monkeypatch):
+    from web import reviewer
+    monkeypatch.setattr(reviewer, '_used', 9)
+    monkeypatch.setattr(reviewer, '_started', reviewer.time.monotonic())
+    reviewer.reserve_audit()
+    with pytest.raises(RuntimeError, match='shared reviewer allowance'):
+        reviewer.reserve_audit()
+    monkeypatch.setattr(reviewer, '_started', reviewer.time.monotonic() - 86401)
+    reviewer.reserve_audit()
+    assert reviewer._used == 1

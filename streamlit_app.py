@@ -3,7 +3,8 @@ import hmac
 import json
 import os
 import streamlit as st
-from web.runner import run_audit
+from web.runner import run_audit, validate_repository
+from web.reviewer import reserve_audit
 
 st.set_page_config(page_title='Ghostify · Repository review', page_icon='👻', layout='wide')
 st.title('Ghostify')
@@ -21,14 +22,29 @@ if not st.session_state.get('authenticated'):
     if login:
         if hmac.compare_digest(entered.encode(), password.encode()):
             st.session_state.authenticated = True
+            st.session_state.access_role = "owner"
             st.rerun()
         else:
             st.error('Incorrect password.')
+    st.divider()
+    st.subheader('Evaluator or reviewer?')
+    st.write('Try the same repository analysis, AI summaries, findings, and report downloads. No password needed.')
+    if st.button('Try the live reviewer demo', type='primary'):
+        st.session_state.clear()
+        st.session_state.authenticated = True
+        st.session_state.access_role = 'reviewer'
+        st.session_state.reviewer_audits = 0
+        st.rerun()
+    st.caption('Your report stays in your browser session. Up to 3 audit attempts per session, subject to a shared allowance of 10 per 24 hours. Only configured repository owners are accepted.')
     st.stop()
 
 if st.sidebar.button('Sign out'):
     st.session_state.clear()
     st.rerun()
+reviewer = st.session_state.get('access_role') == 'reviewer'
+st.sidebar.caption('Reviewer session · separate reports' if reviewer else 'Password workspace')
+if reviewer:
+    st.sidebar.caption(f"Audit attempts remaining in this session: {max(0, 3 - st.session_state.get('reviewer_audits', 0))}")
 st.sidebar.header('Source review')
 st.sidebar.write('Public repositories from configured owners. Reports stay in this browser session and can be downloaded.')
 st.sidebar.caption('This hosted workflow does not run dynamic API tests. Findings need human verification.')
@@ -45,8 +61,14 @@ if submitted:
     if not authorized:
         st.error('Confirm repository permission before starting.')
     else:
-        st.session_state.pop('result', None)
         try:
+            url = validate_repository(url)
+            if reviewer:
+                if st.session_state.get('reviewer_audits', 0) >= 3:
+                    raise RuntimeError('This reviewer session has used its 3 audit attempts.')
+                reserve_audit()
+                st.session_state.reviewer_audits += 1
+            st.session_state.pop('result', None)
             with st.spinner('Inspecting source code and preparing your report. This can take several minutes.'):
                 st.session_state.result = run_audit(url)
         except (ValueError, RuntimeError) as exc:
